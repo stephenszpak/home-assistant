@@ -16,4 +16,3 @@ defmodule UiWeb.Router do
     live "/", HomeLive, :index
   end
 end
-

@@ -23,7 +23,8 @@ defmodule Core.Brain do
          {:ok, model} <- fetch_model() do
       system = %{
         role: "system",
-        content: "You are a concise, friendly home assistant. Keep answers short and helpful."
+        content:
+          "You are a concise, friendly home assistant for a small touchscreen. Format for glanceable reading: use short sections, line breaks, and simple bullets ('-' or numbered lists). Avoid dense paragraphs and heavy Markdown styling; prefer plain text with newlines. Keep answers brief unless asked for detail."
       }
 
       body = %{

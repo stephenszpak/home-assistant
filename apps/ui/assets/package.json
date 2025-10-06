@@ -10,7 +10,9 @@
   "devDependencies": {
     "esbuild": "^0.21.5",
     "tailwindcss": "^3.4.0",
-    "concurrently": "^8.2.0"
+    "concurrently": "^8.2.0",
+    "phoenix": "^1.7.0",
+    "phoenix_html": "^3.3.0",
+    "phoenix_live_view": "^0.20.0"
   }
 }
-
