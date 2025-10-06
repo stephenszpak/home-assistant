@@ -1,0 +1,31 @@
+# Elixir / Mix
+/_build/
+/deps/
+/cover/
+/doc/
+/log/
+/tmp/
+erl_crash.dump
+*.ez
+.elixir_ls/
+
+# Umbrella app artifacts (per-app priv static builds)
+/apps/*/priv/static/assets/
+/apps/*/priv/static/cache_manifest.json
+
+# Node / assets
+/apps/*/assets/node_modules/
+/apps/*/assets/.cache/
+/apps/*/assets/dist/
+
+# Environment & editor
+.env
+.env.*
+.DS_Store
+.idea/
+.vscode/
+
+# Dialyzer PLT files (if used)
+*.plt
+*.plt.hash
+

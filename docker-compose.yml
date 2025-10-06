@@ -1,0 +1,17 @@
+version: "3.9"
+
+services:
+  app:
+    image: elixir:1.17
+    working_dir: /app
+    environment:
+      MIX_ENV: dev
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+    ports:
+      - "4000:4000"
+    command: >
+      bash -lc "mix local.hex --force && mix local.rebar --force && mix deps.get && iex -S mix phx.server"
+
