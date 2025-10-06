@@ -18,4 +18,3 @@ defmodule Ui.Application do
     :ok
   end
 end
-

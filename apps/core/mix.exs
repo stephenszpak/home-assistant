@@ -25,8 +25,9 @@ defmodule Core.MixProject do
   defp deps do
     [
       {:jason, "~> 1.4"},
-      {:finch, "~> 0.18"}
+      {:finch, "~> 0.18"},
+      {:req, "~> 0.5"},
+      {:phoenix_pubsub, "~> 2.1"}
     ]
   end
 end
-

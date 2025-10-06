@@ -1,5 +1,6 @@
 import Config
 
 # Default Finch pool
-config :core, finch_name: Core.Finch
-
+config :core,
+  finch_name: Core.Finch,
+  pubsub: Ui.PubSub

@@ -13,20 +13,29 @@ defmodule Core.Home do
   end
 
   @doc """
-  Toggle an entity via Home Assistant REST API (stub).
+  Toggle an entity via Home Assistant REST API.
+
+  POST {base}/api/services/homeassistant/toggle with JSON body %{entity_id: id}
+  Requires `HA_TOKEN` in env; returns {:ok, body} | {:error, reason}
   """
-  def toggle(_entity_id) do
-    if missing?() do
-      Logger.warning("HA config missing; not calling Home Assistant")
-      {:error, :not_configured}
-    else
-      {:ok, :stub}
+  def toggle(entity_id) when is_binary(entity_id) do
+    case config() do
+      %{base: base, token: token} when is_binary(base) and base != "" and is_binary(token) and token != "" ->
+        url = URI.merge(base, "/api/services/homeassistant/toggle") |> to_string()
+        headers = [{"authorization", "Bearer #{token}"}, {"content-type", "application/json"}]
+        body = %{entity_id: entity_id}
+        req = Req.new(url: url, headers: headers, finch: Core.Finch)
+        case Req.post(req, json: body) do
+          {:ok, %{status: status, body: resp}} when status in 200..299 -> {:ok, resp}
+          {:ok, %{status: status, body: resp}} -> {:error, {:http_error, status, resp}}
+          {:error, reason} -> {:error, reason}
+        end
+
+      _ ->
+        Logger.warning("HA config missing; not calling Home Assistant")
+        {:error, :not_configured}
     end
   end
 
-  defp missing? do
-    cfg = config()
-    is_nil(cfg.base) or cfg.base == "" or is_nil(cfg.token) or cfg.token == ""
-  end
+  # no-op
 end
-
