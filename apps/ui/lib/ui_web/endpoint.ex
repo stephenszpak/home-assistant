@@ -39,4 +39,9 @@ defmodule UiWeb.Endpoint do
   plug Plug.Head
   plug Plug.Session, @session_options
   plug UiWeb.Router
+
+  # Channels for general websocket use (e.g., STT streaming)
+  socket "/socket", UiWeb.UserSocket,
+    websocket: [connect_info: [session: @session_options]],
+    longpoll: false
 end

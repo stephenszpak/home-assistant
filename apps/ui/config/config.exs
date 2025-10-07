@@ -11,7 +11,7 @@ dev_secret_key_base =
 config :ui, UiWeb.Endpoint,
   http: [ip: {0, 0, 0, 0}, port: 4000],
   url: [host: "0.0.0.0", port: 4000],
-  render_errors: [view: UiWeb.ErrorHTML, accepts: ~w(html json), layout: false],
+  render_errors: [formats: [html: UiWeb.ErrorHTML, json: UiWeb.ErrorJSON], layout: false],
   pubsub_server: Ui.PubSub,
   live_view: [signing_salt: System.get_env("LIVE_VIEW_SALT", "LV_SIGNING_SALT")],
   secret_key_base: dev_secret_key_base,

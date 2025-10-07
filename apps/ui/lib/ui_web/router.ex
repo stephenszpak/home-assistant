@@ -11,8 +11,18 @@ defmodule UiWeb.Router do
     plug :put_secure_browser_headers
   end
 
+  pipeline :api do
+    plug :accepts, ["json"]
+  end
+
   scope "/", UiWeb do
     pipe_through :browser
     live "/", HomeLive, :index
+  end
+
+  scope "/api", UiWeb do
+    pipe_through :api
+    post "/stt", ApiController, :stt
+    post "/tts", ApiController, :tts
   end
 end

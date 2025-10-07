@@ -9,7 +9,7 @@ config :ui, UiWeb.Endpoint,
   secret_key_base: System.get_env("PHX_SECRET_KEY_BASE", String.duplicate("a", 64)),
   live_view: [signing_salt: System.get_env("LIVE_VIEW_SALT", "LV_SIGNING_SALT")],
   check_origin: false,
-  render_errors: [view: UiWeb.ErrorHTML, accepts: ~w(html json), layout: false],
+  render_errors: [formats: [html: UiWeb.ErrorHTML, json: UiWeb.ErrorJSON], layout: false],
   pubsub_server: Ui.PubSub
 
 # Core defaults

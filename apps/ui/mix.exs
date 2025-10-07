@@ -33,8 +33,9 @@ defmodule Ui.MixProject do
       {:telemetry_poller, "~> 1.0"},
       {:jason, "~> 1.4"},
       {:plug_cowboy, "~> 2.6"},
+      {:req, "~> 0.5"},
+      {:websockex, "~> 0.4"},
       {:core, in_umbrella: true}
     ]
   end
 end
-
