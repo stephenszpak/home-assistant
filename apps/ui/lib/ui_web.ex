@@ -41,7 +41,9 @@ defmodule UiWeb do
       import Phoenix.HTML
       import Phoenix.LiveView.Helpers
       import Phoenix.Component
-      import UiWeb.CoreComponents
+      import UiWeb.WeatherComponents
+      import UiWeb.AnswerCard
+      import UiWeb.PromptBanner
     end
   end
 end

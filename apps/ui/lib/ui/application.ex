@@ -4,6 +4,7 @@ defmodule Ui.Application do
   @impl true
   def start(_type, _args) do
     children = [
+      Ui.Voice.Store,
       {Phoenix.PubSub, name: Ui.PubSub},
       UiWeb.Endpoint
     ]

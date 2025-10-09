@@ -9,7 +9,7 @@ defmodule UiWeb.SttChannel do
   end
 
   @impl true
-  def handle_in("start", %{"mime" => mime} = _payload, socket) do
+  def handle_in("start", %{"mime" => mime} = payload, socket) do
     ext =
       case mime do
         "audio/webm" -> ".webm"
@@ -28,10 +28,14 @@ defmodule UiWeb.SttChannel do
 
     socket = assign(socket, path: path, mime: mime, filename: "audio" <> ext)
 
-    # Try to start realtime streamer (optional)
+    # Start realtime streamer only when explicitly requested (e.g., Voice Mode)
     streamer =
-      case Ui.STT.Streamer.start_link(channel: self()) do
-        {:ok, pid} -> pid
+      case payload["realtime"] do
+        true ->
+          case Ui.STT.Streamer.start_link(channel: self()) do
+            {:ok, pid} -> pid
+            _ -> nil
+          end
         _ -> nil
       end
     {:reply, {:ok, %{ok: true}}, assign(socket, streamer: streamer)}

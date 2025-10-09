@@ -22,3 +22,17 @@ config :core,
 for conf <- Path.wildcard(Path.expand("../apps/*/config/config.exs", __DIR__)) do
   import_config conf
 end
+
+# Console logger formatting with color highlights for easier error scanning
+config :logger, :console,
+  format: "$time [$level] $metadata$message\n",
+  metadata: [:module, :function],
+  colors: [
+    enabled: true,
+    info: :normal,
+    warn: :yellow,
+    error: :red
+  ]
+
+# Reduce log noise by default (hide debug channel chunk spam)
+config :logger, level: :info

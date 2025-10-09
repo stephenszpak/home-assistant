@@ -1,5 +1,6 @@
 defmodule UiWeb.ApiController do
   use Phoenix.Controller, formats: [:json]
+  require Logger
 
   def stt(conn, params) do
     stt_url = System.get_env("STT_URL")
@@ -32,6 +33,77 @@ defmodule UiWeb.ApiController do
       {:error, :no_url} -> json(conn |> Plug.Conn.put_status(500), %{error: "TTS_URL not set"})
       {:error, %Req.TransportError{reason: reason}} -> json(conn |> Plug.Conn.put_status(502), %{error: inspect(reason)})
       {:error, reason} -> json(conn |> Plug.Conn.put_status(502), %{error: inspect(reason)})
+    end
+  end
+
+  # Voice (Realtime) ---------------------------------------------------------
+  def voice_health(conn, _params) do
+    json(conn, %{ok: true, model: System.get_env("OPENAI_REALTIME_MODEL", "gpt-4o-realtime-preview")})
+  end
+
+  def voice_token(conn, _params) do
+    with :ok <- check_origin(conn),
+         :ok <- ensure_https(conn),
+         :ok <- rate_limit(conn),
+         {:ok, token} <- issue_ephemeral_token() do
+      ip = conn.remote_ip |> :inet.ntoa() |> to_string()
+      Logger.info("voice_token issued", ip: ip, at: System.system_time(:second))
+      json(conn, %{token: token})
+    else
+      {:error, :rate_limited} -> json(Plug.Conn.put_status(conn, 429), %{error: "rate_limited"})
+      {:error, :bad_origin} -> json(Plug.Conn.put_status(conn, 403), %{error: "forbidden"})
+      {:error, :insecure} -> json(Plug.Conn.put_status(conn, 400), %{error: "https_required"})
+      {:error, reason} -> json(Plug.Conn.put_status(conn, 502), %{error: inspect(reason)})
+    end
+  end
+
+  defp rate_limit(conn) do
+    ip = conn.remote_ip |> :inet.ntoa() |> to_string()
+    case Ui.Voice.Store.allow_ip?(ip, 3, 60_000) do
+      true -> :ok
+      false -> {:error, :rate_limited}
+    end
+  end
+
+  defp check_origin(conn) do
+    origin = get_req_header(conn, "origin") |> List.first()
+    allowed = System.get_env("ALLOWED_ORIGINS")
+    cond do
+      is_nil(origin) -> :ok # same-origin fetch without header
+      origin =~ ~r/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/ -> :ok
+      is_binary(allowed) and allowed != "" and (origin in String.split(allowed, ",", trim: true)) -> :ok
+      Mix.env() != :prod -> :ok
+      true -> {:error, :bad_origin}
+    end
+  end
+
+  defp ensure_https(conn) do
+    if Mix.env() == :prod do
+      if conn.scheme == :https, do: :ok, else: {:error, :insecure}
+    else
+      :ok
+    end
+  end
+
+  defp issue_ephemeral_token do
+    api_key = System.get_env("OPENAI_API_KEY")
+    model = System.get_env("OPENAI_REALTIME_MODEL", "gpt-4o-realtime-preview")
+    if api_key in [nil, ""], do: {:error, :missing_api_key}, else: :ok
+    url = "https://api.openai.com/v1/realtime/sessions"
+    body = %{
+      model: model,
+      voice: "alloy",
+      modalities: ["audio", "text"],
+      instructions: "You are an English-only assistant. Listen and respond in concise English."
+    }
+    req = Req.new()
+          |> Req.merge(url: url, headers: [{"authorization", "Bearer " <> api_key}, {"content-type", "application/json"}], retry: :transient, retry_log_level: :warn)
+    case Req.post(req, json: body) do
+      {:ok, %{status: 200, body: %{"client_secret" => %{"value" => token}} = _resp}} when is_binary(token) ->
+        Ui.Voice.Store.track_token(token)
+        {:ok, token}
+      {:ok, %{status: s, body: b}} -> {:error, {:http_error, s, b}}
+      {:error, reason} -> {:error, reason}
     end
   end
 

@@ -19,6 +19,7 @@ import {Socket} from "phoenix"
       this._recog = null
       this._finalText = ""
       this._interimText = ""
+      this._hadText = false
       this.handleEvent("mic:stop", () => this.stop())
       this.el.addEventListener("click", () => (this.listening ? this.stop() : this.start()))
     },
@@ -41,7 +42,8 @@ import {Socket} from "phoenix"
           const recog = (this._recog = new SR())
           recog.continuous = true
           recog.interimResults = true
-          recog.lang = navigator.language || "en-US"
+          // Force English for on-device captions to match Voice Mode
+          recog.lang = "en-US"
           recog.onresult = (e) => {
             let finalChunk = ""
             let interimChunk = ""
@@ -53,19 +55,17 @@ import {Socket} from "phoenix"
             if (finalChunk) this._finalText += finalChunk
             this._interimText = interimChunk
             const combined = (this._finalText + this._interimText).trim()
-            this.pushEvent("mic_live_text", { text: combined })
+            this.pushEvent("voice:partial", { text: combined })
+            if (combined) this._hadText = true
           }
-          recog.onend = () => {
-            // Chrome often ends on short pauses; keep it running while listening
-            if (this.listening) {
-              try { recog.start() } catch (_) {}
-            }
-          }
+          // When speech ends, stop recording quickly
+          recog.onspeechend = () => { if (this.listening) setTimeout(() => this.stop(), 125) }
+          recog.onend = () => {}
           recog.onerror = () => {}
           try { recog.start() } catch (_) {}
         }
         const mime = MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm" : "audio/ogg"
-        await this._chan.push("start", { mime })
+        await this._chan.push("start", { mime, realtime: false })
         const rec = (this._rec = new MediaRecorder(stream, { mimeType: mime }))
         const chunks = []
         rec.ondataavailable = async (e) => {
@@ -81,29 +81,28 @@ import {Socket} from "phoenix"
         }
         rec.onstop = async () => {
           try {
-            let sentFinal = false
-            this._chan.on("final", (payload) => {
-              sentFinal = true
-              const text = (payload && payload.text) || ""
-              if (text) this.pushEvent("send", { text })
-            })
-            await this._chan.push("stop", {})
-            // Fallback if channel fails to produce final text
-            setTimeout(async () => {
-              if (sentFinal) return
-              try {
-                const blob = new Blob(chunks, { type: mime })
-                const fd = new FormData()
-                fd.append("file", blob, mime === "audio/webm" ? "audio.webm" : "audio.ogg")
-                const resp = await fetch("/api/stt", { method: "POST", body: fd })
-                let text = ""
-                try { const data = await resp.json(); text = data && data.text ? data.text : "" } catch(_) {}
-                if (!text) text = (this._finalText + this._interimText).trim()
-                if (text) this.pushEvent("send", { text })
-              } catch (_) {}
-            }, 1500)
+            // Always use the banner (on-device) transcript for Ask
+            const combined = (this._finalText + this._interimText).trim()
+            if (combined) {
+              this.pushEvent("voice:final", { text: combined })
+              this.pushEvent("send", { text: combined })
+            } else {
+              // Briefly wait for any last SR result, then cancel
+              setTimeout(() => {
+                const retry = (this._finalText + this._interimText).trim()
+                if (retry) {
+                  this.pushEvent("voice:final", { text: retry })
+                  this.pushEvent("send", { text: retry })
+                } else {
+                  this.pushEvent("voice:cancel", {})
+                }
+              }, 150)
+            }
+            // Stop server-side channel stream (cleanup only)
+            try { await this._chan.push("stop", {}) } catch(_) {}
           } catch (err) {
             console.error("STT error", err)
+            this.pushEvent("voice:cancel", {})
           } finally {
             if (this._recog) { try { this._recog.stop() } catch (_) {} }
             this._cleanupStream()
@@ -113,7 +112,7 @@ import {Socket} from "phoenix"
             this._setIdle()
           }
         }
-        rec.start(250) // request ~4 chunks per second
+        rec.start(500) // reduce chunk frequency; lower server pressure
         // Auto-stop after 10s if user doesn't tap to stop
         this._autoTimer = setTimeout(() => this.stop(), 10000)
       } catch (err) {
@@ -129,7 +128,7 @@ import {Socket} from "phoenix"
         try { this._rec.stop() } catch (_) {}
       }
       if (this._recog) { try { this._recog.stop() } catch (_) {} }
-      this.pushEvent("mic_live_text", { text: "" })
+      // banner cleared through voice events only
       this._setIdle()
       this._cleanupStream()
     },

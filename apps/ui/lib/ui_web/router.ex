@@ -24,5 +24,9 @@ defmodule UiWeb.Router do
     pipe_through :api
     post "/stt", ApiController, :stt
     post "/tts", ApiController, :tts
+    scope "/voice" do
+      post "/token", ApiController, :voice_token
+      get "/health", ApiController, :voice_health
+    end
   end
 end

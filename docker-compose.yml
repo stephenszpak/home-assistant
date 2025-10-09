@@ -10,13 +10,21 @@ services:
       - .env
     volumes:
       - .:/app
-      - /app/apps/ui/assets/node_modules
     ports:
       - "4000:4000"
+    tty: true
+    stdin_open: true
     command: >
-      bash -lc "apt-get update && apt-get install -y --no-install-recommends curl ca-certificates gnupg && \
-      curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && apt-get install -y nodejs && \
-      mix local.hex --force && mix local.rebar --force && mix deps.get && \
-      cd apps/ui/assets && npm install && npm run build && cd - && \
-      mix phx.server"
+      bash -lc "mix local.hex --force && mix local.rebar --force && mix deps.get && mix phx.server"
     restart: unless-stopped
+    depends_on:
+      - assets
+
+  assets:
+    image: node:20
+    working_dir: /app
+    volumes:
+      - .:/app
+      - /app/apps/ui/assets/node_modules
+    command: >
+      bash -lc "cd apps/ui/assets && npm install && npm run build"

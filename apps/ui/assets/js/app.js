@@ -2,6 +2,7 @@ import "phoenix_html"
 import {Socket} from "phoenix"
 import {LiveSocket} from "phoenix_live_view"
 import "./mic"
+import { VoiceMode } from "./hooks/voice_mode"
 
 const csrfToken = document.querySelector("meta[name='csrf-token']")?.getAttribute("content")
 
@@ -37,9 +38,22 @@ window.AppHooks.App = {
         console.error("TTS playback error", e)
       }
     })
+
+    // Load persisted banner settings
+    const mode = localStorage.getItem("banner_mode")
+    const font = localStorage.getItem("banner_font")
+    const hide = localStorage.getItem("banner_hide")
+    this.pushEvent("banner_settings", { mode, font, hide })
+
+    this.handleEvent("banner:save", ({ mode, font, hide }) => {
+      if (mode) localStorage.setItem("banner_mode", mode)
+      if (font) localStorage.setItem("banner_font", font)
+      if (hide) localStorage.setItem("banner_hide", hide)
+    })
   }
 }
 
+window.AppHooks.VoiceMode = VoiceMode
 const hooks = window.AppHooks
 const liveSocket = new LiveSocket("/live", Socket, {params: {_csrf_token: csrfToken}, hooks})
 liveSocket.connect()
