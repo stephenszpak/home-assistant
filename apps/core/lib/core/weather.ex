@@ -36,6 +36,31 @@ defmodule Core.Weather do
     end
   end
 
+  @doc """
+  Fetch current weather and 5-day forecast for given latitude/longitude.
+
+  Returns {:ok, map} with keys: :place, :current, :daily. `:place` will contain the provided coordinates.
+  """
+  def fetch(lat, lon) when is_number(lat) and is_number(lon) do
+    case get_forecast(lat, lon) do
+      {:ok, data} ->
+        {:ok,
+         %{
+           place: %{name: "", country: nil, admin1: nil, latitude: lat, longitude: lon},
+           current: %{
+             temperature_c: get_in(data, ["current", "temperature_2m"]) || get_in(data, ["current", "temperature"]),
+             weather_code: get_in(data, ["current", "weather_code"])
+           },
+           daily:
+             build_daily(
+               data["daily"] || %{},
+               get_in(data, ["daily_units"]) || %{}
+             )
+         }}
+      {:error, _} = e -> e
+    end
+  end
+
   defp geocode(name) do
     req = Req.new(url: @geocode)
     case Req.get(req, params: [name: name, count: 1]) do
@@ -45,6 +70,7 @@ defmodule Core.Weather do
         place = %{name: res["name"], country: res["country"], admin1: res["admin1"]}
         {:ok, {lat, lon, place}}
       {:ok, %{status: 200, body: %{"results" => []}}} -> {:error, :not_found}
+      {:ok, %{status: 200, body: b}} -> {:error, {:bad_body, b}}
       {:ok, %{status: s, body: b}} -> {:error, {:http_error, s, b}}
       {:error, reason} -> {:error, reason}
     end

@@ -44,6 +44,7 @@ defmodule UiWeb do
       import UiWeb.WeatherComponents
       import UiWeb.AnswerCard
       import UiWeb.PromptBanner
+      import UiWeb.ClockFace
     end
   end
 end

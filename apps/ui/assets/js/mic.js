@@ -27,6 +27,7 @@ import {Socket} from "phoenix"
       if (this.listening) return
       try {
         this._setListening()
+        try { this.pushEvent('ask:started', {}) } catch(_) {}
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
         this._stream = stream
         // Channel setup
@@ -104,6 +105,7 @@ import {Socket} from "phoenix"
             console.error("STT error", err)
             this.pushEvent("voice:cancel", {})
           } finally {
+            try { this.pushEvent('ask:ended', {}) } catch(_) {}
             if (this._recog) { try { this._recog.stop() } catch (_) {} }
             this._cleanupStream()
             this.pushEvent("mic_live_text", { text: "" })

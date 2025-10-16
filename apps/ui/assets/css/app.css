@@ -12,3 +12,21 @@ html, body { height: 100%; }
   overflow: hidden;
   -webkit-line-clamp: 2;
 }
+
+@layer utilities {
+  .hairline { @apply border border-black/5 dark:border-white/10; }
+  .glass { @apply bg-white/70 dark:bg-neutral-900/60 backdrop-blur-md; }
+  .elev-1 { box-shadow: 0 4px 24px rgba(0,0,0,0.08); }
+  .elev-2 { box-shadow: 0 8px 40px rgba(0,0,0,0.12); }
+  .text-dim { @apply text-neutral-500 dark:text-neutral-400; }
+  .chip { @apply text-[11px] px-2 py-1 rounded-md bg-neutral-200/60 dark:bg-neutral-800/60 text-neutral-700 dark:text-neutral-200; }
+  .ambient-dawn { background: linear-gradient(180deg, #fff8f0, #f1f5ff); }
+  .ambient-day { background: linear-gradient(180deg, #f9fbff, #eef3ff); }
+  .ambient-dusk { background: linear-gradient(180deg, #fff3f3, #f3f1ff); }
+  .ambient-night { background: linear-gradient(180deg, #0c0f14, #0b0e12); }
+  .grain { background-image: url('/assets/textures/grain.png'); background-size: 200px 200px; opacity: 0.03; pointer-events: none; }
+  .blink-colon { animation: blink 2s ease-in-out infinite; }
+  @keyframes blink { 0%,100% { opacity: 1 } 50% { opacity: 0.35 } }
+  .progress-bar { height: 3px; background: linear-gradient(90deg, rgba(99,102,241,.8), rgba(59,130,246,.8)); animation: indet 1.5s linear infinite; }
+  @keyframes indet { 0% { transform: translateX(-100%); width: 40% } 50% { width: 60% } 100% { transform: translateX(200%); width: 40% } }
+}

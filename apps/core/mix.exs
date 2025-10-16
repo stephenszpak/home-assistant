@@ -27,7 +27,8 @@ defmodule Core.MixProject do
       {:jason, "~> 1.4"},
       {:finch, "~> 0.18"},
       {:req, "~> 0.5"},
-      {:phoenix_pubsub, "~> 2.1"}
+      {:phoenix_pubsub, "~> 2.1"},
+      # Calendar deps removed
     ]
   end
 end

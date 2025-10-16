@@ -53,6 +53,8 @@ Copy `.env.example` to `.env` and set:
 - `HA_TOKEN` — Long‑lived HA token
 - `ALLOWED_ORIGINS` — Comma-separated allowed origins for token issuance (prod)
 
+<!-- Calendar integration removed -->
+
 ## Docker Compose (optional)
 
 `docker-compose.yml` includes a basic service mapping port 4000. It expects the `.env` file and will run `mix phx.server` in dev mode.

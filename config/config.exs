@@ -18,6 +18,9 @@ config :core,
   ha_base_url: System.get_env("HA_BASE_URL", "http://homeassistant.local:8123"),
   ha_token: System.get_env("HA_TOKEN")
 
+# Use Tzdata for time zone conversions
+## Time zone database not required (calendar removed)
+
 # Import each child app's config explicitly (workaround for wildcard resolution in some environments)
 for conf <- Path.wildcard(Path.expand("../apps/*/config/config.exs", __DIR__)) do
   import_config conf

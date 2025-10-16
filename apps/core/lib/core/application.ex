@@ -5,7 +5,8 @@ defmodule Core.Application do
   def start(_type, _args) do
     children = [
       {Finch, name: Core.Finch},
-      Core.Timers
+      Core.Timers,
+      # Calendar cache removed
     ]
 
     opts = [strategy: :one_for_one, name: Core.Supervisor]

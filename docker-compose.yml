@@ -6,16 +6,21 @@ services:
     working_dir: /app
     environment:
       MIX_ENV: dev
+      HEX_HOME: /root/.mix
+      # Calendar sidecar removed
     env_file:
       - .env
     volumes:
       - .:/app
+      - hex_cache:/root/.mix
+      - rebar_cache:/root/.cache/rebar3
+      - mix_cache:/root/.cache/mix
     ports:
       - "4000:4000"
     tty: true
     stdin_open: true
     command: >
-      bash -lc "mix local.hex --force && mix local.rebar --force && mix deps.get && mix phx.server"
+      bash -lc "mix local.hex --if-missing --force && mix local.rebar --if-missing --force && mix deps.get && mix phx.server"
     restart: unless-stopped
     depends_on:
       - assets
@@ -23,8 +28,15 @@ services:
   assets:
     image: node:20
     working_dir: /app
+    environment:
+      NPM_CONFIG_CACHE: /tmp/npm-cache
     volumes:
       - .:/app
       - /app/apps/ui/assets/node_modules
     command: >
-      bash -lc "cd apps/ui/assets && npm install && npm run build"
+      bash -lc "cd apps/ui/assets && npm ci --no-audit --no-fund --prefer-offline && npm run build"
+
+volumes:
+  hex_cache:
+  rebar_cache:
+  mix_cache:
